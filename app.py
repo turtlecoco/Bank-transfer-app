@@ -1,16 +1,10 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Import CORS
+from flask_cors import CORS
 import sqlite3
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS to allow frontend access
-
-# (Your existing Flask routes here...)
-
-if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0')
-
+CORS(app)
 
 # Function to connect to the database
 def get_db_connection():
@@ -90,5 +84,6 @@ def get_transactions():
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0')
+
 
 
