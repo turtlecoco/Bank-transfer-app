@@ -10,6 +10,11 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# Route to check if API is running
+@app.route('/')
+def home():
+    return jsonify({"message": "Flask API is running!"})
+
 # Route to process transfers (POST request)
 @app.route('/transfer', methods=['POST'])
 def transfer():
@@ -62,4 +67,5 @@ def get_transactions():
     return jsonify(transactions_list)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=False)
+
