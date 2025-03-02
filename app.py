@@ -10,14 +10,23 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Route to check if API is running
-@app.route('/')
-def home():
-    return jsonify({"message": "Flask API is running!"})
+# Route to set transfer limits
+@app.route('/set_transfer_limit', methods=['POST'])
+def set_transfer_limit():
+    data = request.json
+    limit = float(data.get("limit"))
 
-# Route to process transfers (POST request)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE accounts SET transfer_limit=? WHERE id='MAIN'", (limit,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": f"Transaction limit updated to ${limit}"}), 200
+
+# Route to process transfers
 @app.route('/transfer', methods=['POST'])
-def transfer():
+def transfer_funds():
     data = request.json
     recipient_id = data.get("recipient_id")
     amount = float(data.get("amount"))
@@ -38,7 +47,7 @@ def transfer():
         return jsonify({"error": "Insufficient balance."}), 400
 
     if amount > transfer_limit:
-        return jsonify({"error": f"Transfer exceeds limit of ${transfer_limit}."}), 400
+        return jsonify({"error": f"Transfer amount exceeds the limit of ${transfer_limit}."}), 400
 
     # Process transfer
     cursor.execute("UPDATE accounts SET balance = balance - ? WHERE id='MAIN'", (amount,))
@@ -54,7 +63,7 @@ def transfer():
 
     return jsonify({"message": "Transfer Successful", "amount": amount, "recipient": recipient_id, "time": timestamp})
 
-# Route to fetch transaction history (GET request)
+# Route to fetch transaction history
 @app.route('/transactions', methods=['GET'])
 def get_transactions():
     conn = get_db_connection()
@@ -67,5 +76,6 @@ def get_transactions():
     return jsonify(transactions_list)
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=False, host='0.0.0.0')
+
 
