@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import sqlite3
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")  # Set template folder
 CORS(app)
 
 # Function to connect to the database
@@ -12,12 +12,31 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Root Route to Confirm API is Running
+# Serve HTML pages
 @app.route('/')
 def home():
-    return jsonify({"message": "Flask API is running!"})
+    return render_template("index.html")
 
-# Route to set transfer limits
+@app.route('/transactions-page')
+def transactions_page():
+    return render_template("transactions.html")
+
+@app.route('/limit-page')
+def limit_page():
+    return render_template("limit.html")
+
+# Routes for API
+@app.route('/transactions', methods=['GET'])
+def get_transactions():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM transactions")
+    transactions = cursor.fetchall()
+    conn.close()
+
+    transactions_list = [dict(row) for row in transactions]
+    return jsonify(transactions_list)
+
 @app.route('/set_transfer_limit', methods=['POST'])
 def set_transfer_limit():
     data = request.json
@@ -31,7 +50,6 @@ def set_transfer_limit():
 
     return jsonify({"message": f"Transaction limit updated to ${limit}"}), 200
 
-# Route to process transfers
 @app.route('/transfer', methods=['POST'])
 def transfer_funds():
     data = request.json
@@ -56,11 +74,9 @@ def transfer_funds():
     if amount > transfer_limit:
         return jsonify({"error": f"Transfer amount exceeds the limit of ${transfer_limit}."}), 400
 
-    # Process transfer
     cursor.execute("UPDATE accounts SET balance = balance - ? WHERE id='MAIN'", (amount,))
     cursor.execute("UPDATE accounts SET balance = balance + ? WHERE id=?", (amount, recipient_id))
 
-    # Log transaction
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute("INSERT INTO transactions (sender, recipient, amount, timestamp) VALUES (?, ?, ?, ?)",
                    ("MAIN", recipient_id, amount, timestamp))
@@ -70,20 +86,9 @@ def transfer_funds():
 
     return jsonify({"message": "Transfer Successful", "amount": amount, "recipient": recipient_id, "time": timestamp})
 
-# Route to fetch transaction history
-@app.route('/transactions', methods=['GET'])
-def get_transactions():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM transactions")
-    transactions = cursor.fetchall()
-    conn.close()
-
-    transactions_list = [dict(row) for row in transactions]
-    return jsonify(transactions_list)
-
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0')
+
 
 
 
