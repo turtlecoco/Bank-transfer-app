@@ -10,6 +10,11 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# Root Route to Confirm API is Running
+@app.route('/')
+def home():
+    return jsonify({"message": "Flask API is running!"})
+
 # Route to set transfer limits
 @app.route('/set_transfer_limit', methods=['POST'])
 def set_transfer_limit():
