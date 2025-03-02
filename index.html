@@ -6,32 +6,67 @@
     <title>Bank Transfer</title>
 </head>
 <body>
-    <h2>Transfer Money</h2>
-    
+    <h2>Bank Transfer System</h2>
+
+    <!-- Section for Transfer Money -->
+    <h3>Transfer Money</h3>
     <label for="recipient_id">Recipient ID:</label>
     <input type="text" id="recipient_id" required>
-    
+
     <label for="amount">Amount:</label>
     <input type="number" id="amount" required>
-    
-    <button onclick="transferMoney()">Transfer</button>
 
-    <p id="response"></p>
+    <button onclick="transferMoney()">Transfer</button>
+    <p id="transferResponse"></p>
+
+    <!-- Section for Setting Transfer Limit -->
+    <h3>Set Transfer Limit</h3>
+    <label for="limit">New Transfer Limit:</label>
+    <input type="number" id="limit" required>
+
+    <button onclick="setTransferLimit()">Set Limit</button>
+    <p id="limitResponse"></p>
 
     <script>
+        const API_BASE_URL = "https://your-flask-api.onrender.com";  // Replace with your actual API URL
+
         async function transferMoney() {
             const recipientID = document.getElementById("recipient_id").value;
             const amount = document.getElementById("amount").value;
-            
-            const response = await fetch("https://your-flask-api.onrender.com/transfer", {
+
+            if (!recipientID || !amount) {
+                document.getElementById("transferResponse").innerText = "Please enter recipient ID and amount.";
+                return;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/transfer`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ recipient_id: recipientID, amount: amount })
+                body: JSON.stringify({ recipient_id: recipientID, amount: parseFloat(amount) })
             });
 
             const result = await response.json();
-            document.getElementById("response").innerText = result.message || result.error;
+            document.getElementById("transferResponse").innerText = result.message || result.error;
+        }
+
+        async function setTransferLimit() {
+            const limit = document.getElementById("limit").value;
+
+            if (!limit) {
+                document.getElementById("limitResponse").innerText = "Please enter a new transfer limit.";
+                return;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/set_transfer_limit`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ limit: parseFloat(limit) })
+            });
+
+            const result = await response.json();
+            document.getElementById("limitResponse").innerText = result.message || result.error;
         }
     </script>
 </body>
 </html>
+
